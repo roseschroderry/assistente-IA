@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Ponte opcional Browserbase + Stagehand para o navegador operacional do Assistente Elite.",
+  "description": "Assistente pessoal com IA para desktop, dashboard web, app mobile, voz, memoria, automacoes e ferramentas Office.",
   "scripts": {
     "browser:stagehand": "node browser_agent_runner.mjs"
   },

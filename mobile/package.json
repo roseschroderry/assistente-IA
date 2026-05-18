@@ -2,6 +2,7 @@
   "name": "assistente-elite-mobile",
   "version": "0.1.0",
   "private": true,
+  "description": "App mobile do Assistente Elite para conversar por texto e voz com o backend de IA.",
   "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",

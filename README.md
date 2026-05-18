@@ -1,7 +1,25 @@
 Assistente Elite
 ================
 
-Aplicativo desktop para Windows com interface PyQt, dashboard web local e backend FastAPI.
+Assistente pessoal com IA para Windows, dashboard web e app mobile. Ele foi pensado para ajudar no uso diario do computador: conversar por texto ou voz, organizar arquivos, criar planilhas e documentos, analisar codigos, abrir aplicativos, consultar informacoes do sistema e executar fluxos com ferramentas conectadas ao backend.
+
+Como ele funciona
+-----------------
+
+O Assistente Elite roda um backend FastAPI local que concentra o cerebro, as ferramentas e a comunicacao com provedores de IA. A interface desktop em PyQt inicia o servidor e abre o dashboard web, enquanto o app mobile Expo/React Native conversa com as rotas `/mobile/*` do mesmo backend.
+
+O usuario envia comandos por chat, voz ou app mobile. O backend interpreta a intencao, consulta a memoria local quando necessario e aciona ferramentas especializadas, como criacao de arquivos Office, leitura de PDFs, automacao de navegador, notificacoes, busca de aplicativos e execucao controlada de tarefas no computador. As chaves de IA ficam no servidor, nao no app do cliente.
+
+Beneficios
+----------
+
+- Centraliza chat, voz, automacao, memoria e ferramentas em um unico assistente.
+- Ajuda em tarefas de rotina, como abrir programas, localizar arquivos, montar planilhas, resumir documentos e organizar informacoes.
+- Melhora produtividade com comandos em linguagem natural, reduzindo etapas manuais no computador.
+- Permite uso no desktop e no celular com a mesma base de inteligencia.
+- Mantem configuracoes sensiveis no backend, deixando o app mobile mais seguro para distribuicao.
+- Possui modo de aprovacao para acoes importantes, como operacoes em navegador, publicacoes, compras, exclusoes ou fluxos de maior impacto.
+- Pode evoluir com novas ferramentas, provedores de voz, automacoes e memoria persistente.
 
 Estrutura
 ---------

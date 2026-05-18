@@ -6,6 +6,7 @@ module.exports = {
     name: "Assistente Elite",
     slug: "assistente-elite",
     version: "0.1.0",
+    description: "Assistente pessoal com IA para chat, voz, produtividade, automacoes e ferramentas conectadas ao computador.",
     orientation: "portrait",
     userInterfaceStyle: "dark",
     scheme: "assistenteelite",
