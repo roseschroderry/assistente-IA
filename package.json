@@ -1,0 +1,14 @@
+{
+  "name": "assistente-elite-browser-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ponte opcional Browserbase + Stagehand para o navegador operacional do Assistente Elite.",
+  "scripts": {
+    "browser:stagehand": "node browser_agent_runner.mjs"
+  },
+  "dependencies": {
+    "@browserbasehq/sdk": "^2.10.0",
+    "@browserbasehq/stagehand": "^3.0.0"
+  }
+}

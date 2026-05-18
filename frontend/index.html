@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Elite</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050505'/%3E%3Ccircle cx='32' cy='32' r='18' fill='%23f1f1f1'/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg: #050505;
+            --bg-2: #0a0a0a;
+            --panel: rgba(18, 18, 18, 0.88);
+            --panel-2: rgba(28, 28, 28, 0.92);
+            --panel-3: rgba(38, 38, 38, 0.86);
+            --line: rgba(255, 255, 255, 0.11);
+            --line-strong: rgba(255, 255, 255, 0.22);
+            --text: #f1f1f1;
+            --muted: #9a9a9a;
+            --muted-2: #6e6e6e;
+            --accent: #d8d8d8;
+            --good: #f0f0f0;
+            --warn: #b6b6b6;
+            --bad: #7a7a7a;
+            --shadow: 0 22px 80px rgba(0, 0, 0, 0.62);
+            --voice-energy: 0.15;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            letter-spacing: 0;
+            overflow: hidden;
+        }
+
+        #field {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%),
+                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 32%),
+                var(--bg);
+        }
+
+        .app {
+            height: 100vh;
+            padding: 16px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 12px;
+        }
+
+        .topbar,
+        .panel,
+        .tile,
+        .message,
+        .metric,
+        .activity,
+        .holo-shell,
+        .screen-preview {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .topbar {
+            min-height: 72px;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.045);
+            cursor: pointer;
+            transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line-strong);
+            background: linear-gradient(145deg, #2a2a2a, #0d0d0d);
+            color: var(--accent);
+            font-weight: 850;
+        }
+
+        h1,
+        h2,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            line-height: 1.15;
+            font-weight: 780;
+        }
+
+        .subtitle {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .header-stack {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 11px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.035);
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--bad);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.16);
+        }
+
+        .dot.online {
+            background: var(--good);
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.52);
+        }
+
+        .dot.offline {
+            background: var(--bad);
+        }
+
+        .layout {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 306px minmax(0, 1fr);
+            gap: 12px;
+        }
+
+        .sidebar {
+            min-height: 0;
+            border-radius: 8px;
+            padding: 12px;
+            display: grid;
+            grid-template-rows: auto auto auto 1fr auto;
+            gap: 10px;
+        }
+
+        .section-title {
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button,
+        textarea,
+        input {
+            font: inherit;
+        }
+
+        .btn {
+            min-height: 40px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.055);
+            cursor: pointer;
+            transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            background: rgba(255, 255, 255, 0.11);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+            transform: none;
+        }
+
+        .btn.primary {
+            color: #070707;
+            background: #e8e8e8;
+            border-color: #f5f5f5;
+            font-weight: 800;
+        }
+
+        .btn.primary:hover {
+            background: #ffffff;
+        }
+
+        .btn.active {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.42);
+            background: rgba(255, 255, 255, 0.17);
+        }
+
+        .btn.ghost {
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .tile {
+            min-height: 66px;
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.045);
+        }
+
+        .tile span {
+            display: block;
+            color: var(--muted-2);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .tile strong {
+            display: block;
+            margin-top: 7px;
+            font-size: 0.96rem;
+            color: var(--text);
+            overflow-wrap: anywhere;
+        }
+
+        .metric-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .metric {
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .metric-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .metric-value {
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .bar {
+            height: 7px;
+            margin-top: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #777, #e8e8e8);
+            transition: width 260ms ease;
+        }
+
+        .activity {
+            min-height: 0;
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.24);
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        #activity-log {
+            min-height: 0;
+            overflow: auto;
+            margin-top: 8px;
+            display: grid;
+            align-content: start;
+            gap: 6px;
+            color: #b7b7b7;
+            font-family: Consolas, "SFMono-Regular", monospace;
+            font-size: 0.75rem;
+            line-height: 1.35;
+        }
+
+        .main-panel {
+            min-height: 0;
+            border-radius: 8px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            overflow: hidden;
+        }
+
+        .tabs {
+            min-height: 56px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .tab {
+            flex: 1;
+            color: var(--muted);
+        }
+
+        .tab.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--line-strong);
+        }
+
+        .workspace {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 324px;
+        }
+
+        #chat-messages {
+            min-height: 0;
+            overflow: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            width: min(78%, 780px);
+            border-radius: 8px;
+            padding: 12px 13px;
+            background: rgba(255, 255, 255, 0.055);
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            box-shadow: none;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            border-color: rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.105);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            border-color: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.065);
+        }
+
+        .message.system,
+        .message.error {
+            width: min(92%, 860px);
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        .message.error {
+            color: #ededed;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .message-label {
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .message-text {
+            white-space: pre-wrap;
+        }
+
+        .side {
+            min-width: 0;
+            min-height: 0;
+            overflow: auto;
+            border-left: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 12px;
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr);
+            gap: 10px;
+        }
+
+        .holo-shell {
+            position: relative;
+            min-height: 232px;
+            overflow: hidden;
+            border-radius: 8px;
+            display: grid;
+            grid-template-rows: 1fr auto;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.02)),
+                rgba(0, 0, 0, 0.28);
+        }
+
+        .holo-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.055) 0,
+                rgba(255, 255, 255, 0.055) 1px,
+                transparent 1px,
+                transparent 9px
+            );
+            opacity: 0.34;
+            mix-blend-mode: screen;
+        }
+
+        .hologram {
+            position: relative;
+            min-height: 166px;
+            display: grid;
+            place-items: center;
+            perspective: 720px;
+        }
+
+        .holo-core {
+            position: relative;
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.42);
+            background:
+                radial-gradient(circle, rgba(255, 255, 255, calc(0.10 + var(--voice-energy) * 0.3)), transparent 54%),
+                rgba(255, 255, 255, 0.025);
+            box-shadow:
+                0 0 calc(20px + var(--voice-energy) * 42px) rgba(255, 255, 255, 0.28),
+                inset 0 0 24px rgba(255, 255, 255, 0.14);
+            transform: translateY(calc(var(--voice-energy) * -10px));
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+
+        .holo-core::before,
+        .holo-core::after {
+            content: "";
+            position: absolute;
+            inset: -26px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: rotateX(72deg);
+        }
+
+        .holo-core::after {
+            inset: -46px;
+            opacity: 0.52;
+            animation: orbit 5s linear infinite;
+        }
+
+        .holo-ring {
+            position: absolute;
+            width: 154px;
+            height: 42px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 50%;
+            transform: rotateX(72deg);
+        }
+
+        .holo-ring.r2 {
+            width: 196px;
+            height: 54px;
+            opacity: 0.55;
+            animation: orbit 7s linear infinite reverse;
+        }
+
+        .holo-line {
+            position: absolute;
+            width: 150px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+            opacity: calc(0.26 + var(--voice-energy) * 0.58);
+            animation: scan 2.6s ease-in-out infinite;
+        }
+
+        .holo-bars {
+            position: absolute;
+            bottom: 14px;
+            display: flex;
+            align-items: end;
+            gap: 5px;
+            height: 54px;
+        }
+
+        .holo-bars span {
+            display: block;
+            width: 5px;
+            min-height: 8px;
+            height: calc(10px + var(--voice-energy) * 42px);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.52);
+            animation: bar 840ms ease-in-out infinite alternate;
+        }
+
+        .holo-bars span:nth-child(2) { animation-delay: 80ms; }
+        .holo-bars span:nth-child(3) { animation-delay: 160ms; }
+        .holo-bars span:nth-child(4) { animation-delay: 240ms; }
+        .holo-bars span:nth-child(5) { animation-delay: 320ms; }
+
+        .holo-meta {
+            position: relative;
+            z-index: 1;
+            padding: 0 12px 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .holo-state {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 760;
+        }
+
+        .holo-sub {
+            color: var(--muted);
+            font-size: 0.8rem;
+            min-height: 1.2em;
+            overflow-wrap: anywhere;
+        }
+
+        body.listening .holo-core,
+        body.speaking .holo-core {
+            animation: float 1.8s ease-in-out infinite;
+        }
+
+        body.thinking .holo-core {
+            animation: float 2.6s ease-in-out infinite;
+        }
+
+        @keyframes orbit {
+            to { transform: rotateX(72deg) rotateZ(360deg); }
+        }
+
+        @keyframes scan {
+            0%, 100% { transform: translateY(-62px); opacity: 0.08; }
+            50% { transform: translateY(64px); opacity: 0.68; }
+        }
+
+        @keyframes bar {
+            from { transform: scaleY(0.72); opacity: 0.45; }
+            to { transform: scaleY(1.2); opacity: 0.95; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(calc(var(--voice-energy) * -8px)); }
+            50% { transform: translateY(calc(-10px - var(--voice-energy) * 12px)); }
+        }
+
+        .command-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .chip {
+            min-height: 38px;
+            padding: 0 10px;
+            text-align: left;
+            color: #dfdfdf;
+            font-size: 0.82rem;
+        }
+
+        .screen-card {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto auto auto;
+            gap: 9px;
+        }
+
+        .screen-preview {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.32);
+            box-shadow: none;
+        }
+
+        .screen-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .voice-panel {
+            display: none;
+            padding: 12px;
+            border-top: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.025);
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .voice-panel.active {
+            display: grid;
+        }
+
+        .voice-copy {
+            min-width: 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+            overflow-wrap: anywhere;
+        }
+
+        .voice-copy strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .composer {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 132px;
+            gap: 10px;
+            padding: 12px;
+            border-top: 1px solid var(--line);
+            background: var(--panel-2);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 52px;
+            max-height: 132px;
+            resize: vertical;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            outline: none;
+            padding: 12px;
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        textarea:focus {
+            border-color: rgba(255, 255, 255, 0.36);
+            background: rgba(0, 0, 0, 0.46);
+        }
+
+        .send-area {
+            display: grid;
+            gap: 8px;
+            align-content: stretch;
+        }
+
+        .toggle-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 0.76rem;
+            user-select: none;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .toggle-line input {
+            accent-color: #f1f1f1;
+        }
+
+        .boot-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            display: grid;
+            place-items: center;
+            background: #050505;
+            transition: opacity 520ms ease, visibility 520ms ease;
+        }
+
+        .boot-inner {
+            position: relative;
+            width: min(620px, 84vw);
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            text-align: center;
+        }
+
+        .boot-name {
+            font-size: clamp(2.2rem, 7vw, 5.8rem);
+            font-weight: 900;
+            letter-spacing: 0;
+            color: #f4f4f4;
+            text-shadow: 0 0 28px rgba(255, 255, 255, 0.28);
+            animation: bootFloat 1.8s ease-in-out infinite;
+        }
+
+        .boot-line {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            bottom: 32px;
+            height: 1px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .boot-line::before {
+            content: "";
+            display: block;
+            width: 42%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #ffffff, transparent);
+            animation: bootSweep 1.4s ease-in-out infinite;
+        }
+
+        body.booted .boot-screen {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 28;
+            display: none;
+            background: rgba(0, 0, 0, 0.58);
+        }
+
+        .function-drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 29;
+            width: min(430px, 92vw);
+            padding: 14px;
+            overflow: auto;
+            border-right: 1px solid var(--line-strong);
+            background: rgba(10, 10, 10, 0.96);
+            box-shadow: 28px 0 80px rgba(0, 0, 0, 0.56);
+            transform: translateX(-104%);
+            transition: transform 220ms ease;
+        }
+
+        body.drawer-open .drawer-backdrop {
+            display: block;
+        }
+
+        body.drawer-open .function-drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-head,
+        .drawer-actions,
+        .drawer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .drawer-head {
+            margin-bottom: 12px;
+        }
+
+        .drawer-head strong {
+            font-size: 1.08rem;
+        }
+
+        .drawer-section {
+            border-top: 1px solid var(--line);
+            padding: 12px 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .drawer-section:first-of-type {
+            border-top: 0;
+        }
+
+        .drawer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .mini-input {
+            min-height: 40px;
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.36);
+        }
+
+        .mini-list {
+            max-height: 220px;
+            overflow: auto;
+            display: grid;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .mini-item {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .voice-stage {
+            display: none;
+            position: relative;
+            min-height: 0;
+            padding: 18px;
+            overflow: hidden;
+        }
+
+        .main-panel.voice-mode {
+            grid-template-rows: auto 1fr;
+        }
+
+        .main-panel.voice-mode .workspace,
+        .main-panel.voice-mode .composer,
+        .main-panel.voice-mode .voice-panel {
+            display: none !important;
+        }
+
+        .main-panel.voice-mode .voice-stage {
+            display: grid;
+            place-items: center;
+        }
+
+        .voice-focus {
+            width: min(760px, 88vw);
+            min-height: min(640px, 76vh);
+            border-color: rgba(255, 255, 255, 0.24);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+                rgba(0, 0, 0, 0.34);
+        }
+
+        .voice-focus .hologram {
+            min-height: min(520px, 58vh);
+        }
+
+        .voice-focus .holo-core {
+            width: clamp(132px, 20vw, 190px);
+            height: clamp(132px, 20vw, 190px);
+        }
+
+        .voice-focus .holo-ring {
+            width: clamp(220px, 32vw, 340px);
+            height: clamp(62px, 8vw, 96px);
+        }
+
+        .voice-focus .holo-ring.r2 {
+            width: clamp(300px, 44vw, 470px);
+            height: clamp(84px, 11vw, 132px);
+        }
+
+        .voice-transcript-card {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            z-index: 2;
+            width: min(360px, 42vw);
+            max-height: min(320px, 42vh);
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 8px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(9, 9, 9, 0.82);
+            backdrop-filter: blur(16px);
+        }
+
+        #voice-live-log {
+            min-height: 108px;
+            overflow: auto;
+            display: grid;
+            align-content: start;
+            gap: 6px;
+            color: #d8d8d8;
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toast-stack {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 35;
+            display: grid;
+            gap: 8px;
+            width: min(360px, calc(100vw - 36px));
+        }
+
+        .toast {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(12, 12, 12, 0.94);
+            box-shadow: var(--shadow);
+            color: var(--text);
+            font-size: 0.84rem;
+        }
+
+        @keyframes bootFloat {
+            0%, 100% { transform: translateY(0); opacity: 0.78; }
+            50% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        @keyframes bootSweep {
+            from { transform: translateX(-110%); }
+            to { transform: translateX(260%); }
+        }
+
+        @media (max-width: 1100px) {
+            body {
+                overflow: auto;
+            }
+
+            .app {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                grid-template-rows: auto auto auto auto auto;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .side {
+                border-left: 0;
+                border-top: 1px solid var(--line);
+            }
+
+            .message {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .app {
+                padding: 10px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .header-stack,
+            .actions,
+            .status-grid,
+            .command-list,
+            .composer,
+            .voice-panel {
+                grid-template-columns: 1fr;
+                width: 100%;
+            }
+
+            .header-stack {
+                display: grid;
+            }
+
+            .voice-stage {
+                padding: 10px;
+                align-content: start;
+            }
+
+            .voice-transcript-card {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                max-height: none;
+                margin-bottom: 10px;
+            }
+
+            .voice-focus {
+                width: 100%;
+                min-height: 430px;
+            }
+
+            .drawer-grid,
+            .voice-controls {
+                grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="field"></canvas>
+    <div id="boot-screen" class="boot-screen">
+        <div class="boot-inner">
+            <div class="boot-name">Assistente Elite</div>
+            <div class="boot-line"></div>
+        </div>
+    </div>
+
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <aside id="function-drawer" class="function-drawer" aria-hidden="true">
+        <div class="drawer-head">
+            <div>
+                <strong>Funcoes do assistente</strong>
+                <p class="subtitle">Cerebro, arquivos, automacoes e canais.</p>
+            </div>
+            <button id="drawer-close" class="icon-btn" type="button" aria-label="Fechar menu">x</button>
+        </div>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Cerebro local</span><span id="drawer-brain-state">--</span></div>
+            <div class="drawer-grid">
+                <button id="scan-brain-btn" class="btn chip" type="button">Reindexar</button>
+                <button id="open-brain-btn" class="btn chip" type="button">Abrir achado</button>
+            </div>
+            <input id="brain-query" class="mini-input" placeholder="Buscar app, pasta, planilha ou arquivo...">
+            <div id="brain-results" class="mini-list"></div>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Analisar arquivo</span><span>Upload</span></div>
+            <input id="file-upload" class="mini-input" type="file">
+            <button id="analyze-file-btn" class="btn chip" type="button">Analisar e memorizar</button>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Voz IA</span><span id="voice-cloud-state">--</span></div>
+            <div id="voice-cloud-detail" class="mini-list"></div>
+            <button id="voice-cloud-refresh" class="btn chip" type="button">Atualizar voz</button>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Automacao</span><span>Fluxos</span></div>
+            <input id="flow-name" class="mini-input" placeholder="Nome do fluxo">
+            <textarea id="flow-steps" class="mini-input" rows="4" placeholder="Um passo por linha: open: bloco de notas&#10;notify: Fluxo concluido"></textarea>
+            <div class="drawer-grid">
+                <button id="save-flow-btn" class="btn chip" type="button">Salvar fluxo</button>
+                <button id="run-flow-btn" class="btn chip" type="button">Executar fluxo</button>
+            </div>
+            <div id="flow-list" class="mini-list"></div>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Notificacoes</span><span>Push/App</span></div>
+            <input id="notify-channels" class="mini-input" placeholder="app, telegram, email, discord...">
+            <textarea id="notify-message" class="mini-input" rows="3" placeholder="Mensagem de teste ou aviso"></textarea>
+            <button id="send-notify-btn" class="btn chip" type="button">Enviar notificacao</button>
+            <div id="notifications-list" class="mini-list"></div>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Navegador operacional</span><span id="browser-state">--</span></div>
+            <input id="browser-url" class="mini-input" placeholder="https://site.com">
+            <textarea id="browser-instruction" class="mini-input" rows="4" placeholder="Ex: leia a pagina e extraia os principais dados"></textarea>
+            <div class="drawer-grid">
+                <button id="browser-fetch-btn" class="btn chip" type="button">Ler pagina</button>
+                <button id="browser-run-btn" class="btn chip" type="button">Preparar acao</button>
+            </div>
+            <div id="browser-output" class="mini-list"></div>
+            <div class="section-title"><span>Aprovacoes</span><span id="browser-approval-count">0</span></div>
+            <div id="browser-approvals" class="mini-list"></div>
+        </section>
+
+        <section class="drawer-section">
+            <div class="section-title"><span>Catalogo</span><span id="drawer-tool-count">--</span></div>
+            <div id="drawer-tools-list" class="mini-list"></div>
+        </section>
+    </aside>
+    <div id="toast-stack" class="toast-stack"></div>
+
+    <div class="app">
+        <header class="topbar">
+            <div class="brand">
+                <button id="menu-btn" class="icon-btn" type="button" aria-label="Abrir menu">☰</button>
+                <div class="brand-mark">AE</div>
+                <div>
+                    <h1>Assistente Elite</h1>
+                    <p class="subtitle">Console local de comando, voz e automacao</p>
+                </div>
+            </div>
+            <div class="header-stack">
+                <div class="pill"><span id="status-dot" class="dot"></span><span id="status-text">Conectando</span></div>
+                <div class="pill"><span>Modelo</span><strong id="model-pill">--</strong></div>
+                <div class="pill"><span>Acesso</span><strong id="access-pill">--</strong></div>
+                <div class="pill"><span>App</span><strong id="diag-pill">--</strong></div>
+            </div>
+        </header>
+
+        <main class="layout">
+            <aside class="panel sidebar">
+                <div class="section-title"><span>Controle</span><span id="mode-label">Normal</span></div>
+                <div class="actions">
+                    <button id="clear-btn" class="btn ghost" type="button">Limpar</button>
+                    <button id="mod-btn" class="btn ghost" type="button">Manutencao</button>
+                </div>
+
+                <div class="status-grid">
+                    <div class="tile"><span>Operador</span><strong id="operator-state">--</strong></div>
+                    <div class="tile"><span>Ferramentas</span><strong id="tools-state">--</strong></div>
+                    <div class="tile"><span>Cerebro</span><strong id="brain-state">--</strong></div>
+                    <div class="tile"><span>Voz local</span><strong id="voice-state">--</strong></div>
+                    <div class="tile"><span>Execucao</span><strong id="danger-state">--</strong></div>
+                    <div class="tile"><span>App</span><strong id="app-state">--</strong></div>
+                    <div class="tile"><span>Dados</span><strong id="data-state">--</strong></div>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="section-title"><span>Sistema</span><span id="last-update">--:--</span></div>
+                    <div class="metric">
+                        <div class="metric-row"><span>CPU</span><span id="cpu-val" class="metric-value">0%</span></div>
+                        <div class="bar"><span id="cpu-bar"></span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-row"><span>Memoria</span><span id="ram-val" class="metric-value">0%</span></div>
+                        <div class="bar"><span id="ram-bar"></span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-row"><span>Disco</span><span id="disk-val" class="metric-value">0%</span></div>
+                        <div class="bar"><span id="disk-bar"></span></div>
+                    </div>
+                </div>
+
+                <div class="activity">
+                    <div class="section-title"><span>Atividade</span><span id="queue-state">Pronto</span></div>
+                    <div id="activity-log">
+                        <div>&gt; Interface inicializada.</div>
+                        <div>&gt; Aguardando nucleo local.</div>
+                    </div>
+                </div>
+
+                <div class="pill"><span id="pc-info">127.0.0.1:8008</span></div>
+            </aside>
+
+            <section class="panel main-panel">
+                <div class="tabs">
+                    <button id="tab-chat" class="btn tab active" type="button">Chat</button>
+                    <button id="tab-voice" class="btn tab" type="button">Voz</button>
+                </div>
+
+                <div id="voice-stage" class="voice-stage">
+                    <div class="voice-transcript-card">
+                        <div class="section-title"><span>Transcricao</span><span id="voice-status-stage">Voz em espera</span></div>
+                        <div id="voice-live-log">
+                            <div>Transcricao em tempo real pronta.</div>
+                        </div>
+                        <div class="voice-controls">
+                            <button id="voice-stage-toggle" class="btn primary" type="button">Ouvir</button>
+                            <button id="send-transcript-btn" class="btn chip" type="button">Enviar transcricao</button>
+                        </div>
+                    </div>
+
+                    <div class="holo-shell voice-focus">
+                        <div class="hologram" aria-hidden="true">
+                            <div class="holo-ring r1"></div>
+                            <div class="holo-ring r2"></div>
+                            <div class="holo-line"></div>
+                            <div class="holo-core"></div>
+                            <div class="holo-bars">
+                                <span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="holo-meta">
+                            <div class="holo-state"><span id="voice-stage-state">Em espera</span><span id="voice-stage-support">--</span></div>
+                            <div class="holo-sub" id="voice-stage-transcript">Aguardando voz.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workspace">
+                    <div id="chat-messages">
+                        <article class="message system">
+                            <div class="message-label">Sistema</div>
+                            <div class="message-text">Nucleo pronto para comandos locais.</div>
+                        </article>
+                    </div>
+
+                    <aside class="side">
+                        <div class="holo-shell">
+                            <div class="hologram" aria-hidden="true">
+                                <div class="holo-ring r1"></div>
+                                <div class="holo-ring r2"></div>
+                                <div class="holo-line"></div>
+                                <div class="holo-core"></div>
+                                <div class="holo-bars">
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+                            <div class="holo-meta">
+                                <div class="holo-state"><span id="hologram-state">Em espera</span><span id="voice-support">--</span></div>
+                                <div class="holo-sub" id="voice-transcript">Aguardando voz.</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="section-title"><span>Comandos</span><span>Local</span></div>
+                            <div class="command-list">
+                                <button class="btn chip" data-command="Mostre o status do sistema." type="button">Status</button>
+                                <button class="btn chip" data-command="Crie uma pasta chamada Teste Assistente na area de trabalho." type="button">Nova pasta</button>
+                                <button class="btn chip" data-command="Crie uma planilha chamada relatorio_teste.xlsx com as colunas Item e Status." type="button">Planilha</button>
+                                <button class="btn chip" data-command="Crie um arquivo chamado anotacao_teste.txt com o texto Assistente pronto para app." type="button">Arquivo</button>
+                                <button class="btn chip" data-command="Crie um documento Word chamado relatorio_teste.docx sobre rotina de trabalho." type="button">Word</button>
+                                <button class="btn chip" data-command="Crie uma apresentacao chamada apresentacao_teste.pptx sobre produtividade." type="button">Slides</button>
+                                <button class="btn chip" data-command="Faca um diagnostico do app." type="button">Diagnostico</button>
+                                <button class="btn chip" data-command="Liste os arquivos da minha area de trabalho." type="button">Desktop</button>
+                                <button class="btn chip" data-command="Observe minha tela agora." type="button">Observar</button>
+                                <button class="btn chip" data-command="Abra o bloco de notas." type="button">Abrir app</button>
+                                <button class="btn chip" data-command="Use o navegador operacional para ler https://example.com e resumir a pagina." type="button">Navegador</button>
+                            </div>
+                        </div>
+
+                        <div class="screen-card">
+                            <div class="section-title"><span>Tela</span><span id="screen-state">Manual</span></div>
+                            <img id="screen-preview" class="screen-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Crect width='16' height='10' fill='%230b0b0b'/%3E%3C/svg%3E" alt="">
+                            <div class="screen-actions">
+                                <button id="snapshot-btn" class="btn chip" type="button">Capturar</button>
+                                <button id="watch-btn" class="btn chip" type="button">Acompanhar</button>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+
+                <div id="voice-panel" class="voice-panel">
+                    <div class="voice-copy">
+                        <strong id="voice-status">Voz em espera</strong>
+                        <span id="voice-devices">Microfone: verificando...</span>
+                    </div>
+                    <button id="voice-toggle" class="btn primary" type="button">Ouvir</button>
+                </div>
+
+                <form id="composer" class="composer">
+                    <textarea id="user-input" placeholder="Digite seu comando local..."></textarea>
+                    <div class="send-area">
+                        <button id="send-btn" class="btn primary" type="submit">Enviar</button>
+                        <label class="toggle-line">
+                            <input id="speak-toggle" type="checkbox">
+                            Ler resposta
+                        </label>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = window.SERVER_PORT
+            ? `http://127.0.0.1:${window.SERVER_PORT}`
+            : (location.protocol.startsWith("http") ? location.origin : "http://127.0.0.1:8008");
+
+        const state = {
+            busy: false,
+            mode: "chat",
+            maintenance: false,
+            listening: false,
+            recognition: null,
+            finalTranscript: "",
+            watchTimer: null,
+            backendVoice: false,
+            cloudVoice: false,
+            mediaRecorder: null,
+            audioChunks: [],
+            voiceStatusData: null,
+            currentAudio: null,
+            hologramTimer: null,
+            lastDiagnostic: "",
+            lastBrainMessage: "",
+            lastNotificationKey: "",
+            toolsLoaded: false,
+            voiceLog: [],
+        };
+
+        const els = {
+            accessPill: document.getElementById("access-pill"),
+            activityLog: document.getElementById("activity-log"),
+            appState: document.getElementById("app-state"),
+            analyzeFileBtn: document.getElementById("analyze-file-btn"),
+            browserApprovalCount: document.getElementById("browser-approval-count"),
+            browserApprovals: document.getElementById("browser-approvals"),
+            browserFetchBtn: document.getElementById("browser-fetch-btn"),
+            browserInstruction: document.getElementById("browser-instruction"),
+            browserOutput: document.getElementById("browser-output"),
+            browserRunBtn: document.getElementById("browser-run-btn"),
+            browserState: document.getElementById("browser-state"),
+            browserUrl: document.getElementById("browser-url"),
+            brainQuery: document.getElementById("brain-query"),
+            brainResults: document.getElementById("brain-results"),
+            brainState: document.getElementById("brain-state"),
+            chatMessages: document.getElementById("chat-messages"),
+            clearBtn: document.getElementById("clear-btn"),
+            cpuBar: document.getElementById("cpu-bar"),
+            cpuVal: document.getElementById("cpu-val"),
+            dataState: document.getElementById("data-state"),
+            dangerState: document.getElementById("danger-state"),
+            diagPill: document.getElementById("diag-pill"),
+            drawerBackdrop: document.getElementById("drawer-backdrop"),
+            drawerBrainState: document.getElementById("drawer-brain-state"),
+            drawerClose: document.getElementById("drawer-close"),
+            drawerToolCount: document.getElementById("drawer-tool-count"),
+            drawerToolsList: document.getElementById("drawer-tools-list"),
+            diskBar: document.getElementById("disk-bar"),
+            diskVal: document.getElementById("disk-val"),
+            fileUpload: document.getElementById("file-upload"),
+            flowList: document.getElementById("flow-list"),
+            flowName: document.getElementById("flow-name"),
+            flowSteps: document.getElementById("flow-steps"),
+            hologramState: document.getElementById("hologram-state"),
+            input: document.getElementById("user-input"),
+            lastUpdate: document.getElementById("last-update"),
+            mainPanel: document.querySelector(".main-panel"),
+            menuBtn: document.getElementById("menu-btn"),
+            modeLabel: document.getElementById("mode-label"),
+            modelPill: document.getElementById("model-pill"),
+            modBtn: document.getElementById("mod-btn"),
+            notificationsList: document.getElementById("notifications-list"),
+            notifyChannels: document.getElementById("notify-channels"),
+            notifyMessage: document.getElementById("notify-message"),
+            openBrainBtn: document.getElementById("open-brain-btn"),
+            operatorState: document.getElementById("operator-state"),
+            pcInfo: document.getElementById("pc-info"),
+            queueState: document.getElementById("queue-state"),
+            ramBar: document.getElementById("ram-bar"),
+            ramVal: document.getElementById("ram-val"),
+            screenPreview: document.getElementById("screen-preview"),
+            screenState: document.getElementById("screen-state"),
+            saveFlowBtn: document.getElementById("save-flow-btn"),
+            scanBrainBtn: document.getElementById("scan-brain-btn"),
+            sendBtn: document.getElementById("send-btn"),
+            sendNotifyBtn: document.getElementById("send-notify-btn"),
+            sendTranscriptBtn: document.getElementById("send-transcript-btn"),
+            snapshotBtn: document.getElementById("snapshot-btn"),
+            speakToggle: document.getElementById("speak-toggle"),
+            statusDot: document.getElementById("status-dot"),
+            statusText: document.getElementById("status-text"),
+            tabChat: document.getElementById("tab-chat"),
+            tabVoice: document.getElementById("tab-voice"),
+            toolsState: document.getElementById("tools-state"),
+            toastStack: document.getElementById("toast-stack"),
+            runFlowBtn: document.getElementById("run-flow-btn"),
+            voiceDevices: document.getElementById("voice-devices"),
+            voiceCloudDetail: document.getElementById("voice-cloud-detail"),
+            voiceCloudRefresh: document.getElementById("voice-cloud-refresh"),
+            voiceCloudState: document.getElementById("voice-cloud-state"),
+            voiceLiveLog: document.getElementById("voice-live-log"),
+            voicePanel: document.getElementById("voice-panel"),
+            voiceStageState: document.getElementById("voice-stage-state"),
+            voiceStageSupport: document.getElementById("voice-stage-support"),
+            voiceStageToggle: document.getElementById("voice-stage-toggle"),
+            voiceStageTranscript: document.getElementById("voice-stage-transcript"),
+            voiceState: document.getElementById("voice-state"),
+            voiceStatus: document.getElementById("voice-status"),
+            voiceStatusStage: document.getElementById("voice-status-stage"),
+            voiceSupport: document.getElementById("voice-support"),
+            voiceToggle: document.getElementById("voice-toggle"),
+            voiceTranscript: document.getElementById("voice-transcript"),
+            watchBtn: document.getElementById("watch-btn"),
+        };
+
+        function logActivity(text) {
+            const line = document.createElement("div");
+            line.textContent = `> ${text}`;
+            els.activityLog.appendChild(line);
+            while (els.activityLog.children.length > 80) {
+                els.activityLog.removeChild(els.activityLog.firstElementChild);
+            }
+            els.activityLog.scrollTop = els.activityLog.scrollHeight;
+        }
+
+        function showToast(title, text = "") {
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text ? `${title}: ${text}` : title;
+            els.toastStack.appendChild(toast);
+            setTimeout(() => toast.remove(), 5200);
+        }
+
+        function toggleDrawer(open = !document.body.classList.contains("drawer-open")) {
+            document.body.classList.toggle("drawer-open", open);
+            document.getElementById("function-drawer").setAttribute("aria-hidden", String(!open));
+            if (open && !state.toolsLoaded) {
+                updateToolCatalog();
+                state.toolsLoaded = true;
+            }
+        }
+
+        function renderMiniList(container, rows, emptyText = "Sem registros.") {
+            container.innerHTML = "";
+            if (!rows || !rows.length) {
+                const item = document.createElement("div");
+                item.className = "mini-item";
+                item.textContent = emptyText;
+                container.appendChild(item);
+                return;
+            }
+            rows.forEach((row) => container.appendChild(row));
+        }
+
+        function appendVoiceLog(speaker, text) {
+            if (!text) return;
+            const item = { speaker, text, time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) };
+            state.voiceLog.push(item);
+            if (state.voiceLog.length > 80) {
+                state.voiceLog.shift();
+            }
+            const line = document.createElement("div");
+            line.textContent = `${item.time} ${speaker}: ${text}`;
+            els.voiceLiveLog.appendChild(line);
+            while (els.voiceLiveLog.children.length > 80) {
+                els.voiceLiveLog.removeChild(els.voiceLiveLog.firstElementChild);
+            }
+            els.voiceLiveLog.scrollTop = els.voiceLiveLog.scrollHeight;
+        }
+
+        function setVoiceButtons(text, disabled = false) {
+            els.voiceToggle.textContent = text;
+            els.voiceStageToggle.textContent = text;
+            els.voiceToggle.disabled = disabled;
+            els.voiceStageToggle.disabled = disabled;
+        }
+
+        function setVoiceTranscript(text) {
+            els.voiceTranscript.textContent = text;
+            els.voiceStageTranscript.textContent = text;
+        }
+
+        function voiceProviderLabel(data = state.voiceStatusData || {}) {
+            const stt = data.deepgram_configured ? "Deepgram" : (state.recognition ? "Browser" : "Backend");
+            const tts = data.elevenlabs_configured ? "ElevenLabs" : (data.local_tts ? "Local" : "Browser");
+            return `${stt} + ${tts}`;
+        }
+
+        function updateVoiceCloudPanel(data = state.voiceStatusData || {}) {
+            if (!els.voiceCloudDetail || !els.voiceCloudState) return;
+            els.voiceCloudState.textContent = voiceProviderLabel(data);
+            const rows = [
+                `Escuta: ${data.deepgram_configured ? `Deepgram ${data.deepgram_model || ""}` : "fallback local/browser"}`,
+                `Idioma: ${data.deepgram_language || "pt-BR"}`,
+                `Fala: ${data.elevenlabs_configured ? `ElevenLabs ${data.elevenlabs_model_id || ""}` : "fallback local/browser"}`,
+                `Voz: ${data.elevenlabs_voice_id || "--"}`,
+            ].map((text) => {
+                const row = document.createElement("div");
+                row.className = "mini-item";
+                row.textContent = text;
+                return row;
+            });
+            renderMiniList(els.voiceCloudDetail, rows, "Voz indisponivel.");
+        }
+
+        function setHologram(mode, text) {
+            document.body.classList.remove("listening", "speaking", "thinking");
+            if (mode) {
+                document.body.classList.add(mode);
+            }
+            els.hologramState.textContent = text || "Em espera";
+            els.voiceStageState.textContent = text || "Em espera";
+            clearInterval(state.hologramTimer);
+            if (!mode) {
+                document.documentElement.style.setProperty("--voice-energy", "0.15");
+                return;
+            }
+            state.hologramTimer = setInterval(() => {
+                const base = mode === "speaking" ? 0.36 : mode === "listening" ? 0.28 : 0.18;
+                const energy = Math.min(1, base + Math.random() * 0.54);
+                document.documentElement.style.setProperty("--voice-energy", energy.toFixed(2));
+            }, 120);
+        }
+
+        function setBusy(value) {
+            state.busy = value;
+            els.sendBtn.disabled = value;
+            els.input.disabled = value;
+            els.queueState.textContent = value ? "Processando" : "Pronto";
+            if (value && !state.listening) {
+                setHologram("thinking", "Processando");
+            } else if (!value && !state.listening) {
+                setHologram(null, "Em espera");
+            }
+        }
+
+        function setConnection(online, detail) {
+            els.statusDot.classList.toggle("online", online);
+            els.statusDot.classList.toggle("offline", !online);
+            els.statusText.textContent = online ? "Nucleo online" : "Nucleo offline";
+            els.pcInfo.textContent = detail || (online ? "Servidor local conectado." : "Servidor local indisponivel.");
+        }
+
+        async function api(path, options = {}) {
+            const response = await fetch(`${API_BASE}${path}`, {
+                headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+                ...options,
+            });
+            if (!response.ok) {
+                const body = await response.text();
+                throw new Error(body || `HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        function addMessage(sender, text, type = "assistant") {
+            const article = document.createElement("article");
+            article.className = `message ${type}`;
+
+            const label = document.createElement("div");
+            label.className = "message-label";
+            label.textContent = sender;
+
+            const content = document.createElement("div");
+            content.className = "message-text";
+            content.textContent = text;
+
+            article.append(label, content);
+            els.chatMessages.appendChild(article);
+            els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+        }
+
+        function speakWithBrowserOrLocal(text) {
+            if (!els.speakToggle.checked || !text) {
+                return;
+            }
+
+            if (!("speechSynthesis" in window)) {
+                api("/voice/speak", { method: "POST", body: JSON.stringify({ text }) })
+                    .catch((error) => logActivity(`TTS backend: ${error.message.slice(0, 80)}`))
+                    .finally(() => setHologram(null, "Em espera"));
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(spoken);
+            utterance.lang = "pt-BR";
+            utterance.rate = 1.02;
+            utterance.onend = () => setHologram(null, "Em espera");
+            utterance.onerror = () => setHologram(null, "Em espera");
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function speakWithCloud(text) {
+            const data = await api("/voice/tts", {
+                method: "POST",
+                body: JSON.stringify({ text }),
+            });
+            if (!data.ok || !data.audio_base64) {
+                throw new Error(data.error || "TTS em nuvem indisponivel.");
+            }
+            if (state.currentAudio) {
+                state.currentAudio.pause();
+                state.currentAudio = null;
+            }
+            const audio = new Audio(`data:${data.mime_type || "audio/mpeg"};base64,${data.audio_base64}`);
+            state.currentAudio = audio;
+            audio.onplay = () => setHologram("speaking", "Falando");
+            audio.onended = () => setHologram(null, "Em espera");
+            audio.onerror = () => setHologram(null, "Em espera");
+            await audio.play();
+        }
+
+        function speak(text) {
+            if (!els.speakToggle.checked || !text) {
+                return;
+            }
+
+            const spoken = text.slice(0, 1400);
+            setHologram("speaking", "Falando");
+            if (state.voiceStatusData && state.voiceStatusData.elevenlabs_configured) {
+                speakWithCloud(spoken).catch((error) => {
+                    logActivity(`ElevenLabs: ${error.message.slice(0, 80)}`);
+                    speakWithBrowserOrLocal(spoken);
+                });
+                return;
+            }
+            speakWithBrowserOrLocal(spoken);
+        }
+
+        async function sendMessage(text, source = "chat") {
+            const message = (text || els.input.value).trim();
+            if (!message || state.busy) return;
+
+            addMessage(source === "voice" ? "Voce por voz" : "Voce", message, "user");
+            if (source === "voice") {
+                appendVoiceLog("Voce", message);
+            }
+            els.input.value = "";
+            setBusy(true);
+            logActivity(`Enviando: ${message.slice(0, 46)}${message.length > 46 ? "..." : ""}`);
+
+            try {
+                const payload = state.maintenance ? `[Modo manutencao] ${message}` : message;
+                const data = await api("/chat", {
+                    method: "POST",
+                    body: JSON.stringify({ message: payload }),
+                });
+                const response = data.response || "Sem resposta do nucleo.";
+                addMessage("Assistente", response, "assistant");
+                if (source === "voice") {
+                    appendVoiceLog("Assistente", response);
+                }
+                logActivity("Resposta recebida.");
+                setBusy(false);
+                speak(response);
+            } catch (error) {
+                setBusy(false);
+                addMessage("Erro", "Falha na comunicacao com o nucleo local.", "error");
+                logActivity(`Erro: ${error.message.slice(0, 90)}`);
+                setConnection(false);
+            }
+        }
+
+        async function clearChat() {
+            try {
+                await api("/clear", { method: "POST", body: "{}" });
+            } catch (error) {
+                logActivity("Historico local limpo; nucleo nao confirmou.");
+            }
+            els.chatMessages.innerHTML = "";
+            addMessage("Sistema", "Conversa limpa.", "system");
+        }
+
+        function toggleModMode() {
+            state.maintenance = !state.maintenance;
+            els.modBtn.classList.toggle("active", state.maintenance);
+            els.modeLabel.textContent = state.maintenance ? "Manutencao" : "Normal";
+            els.input.placeholder = state.maintenance
+                ? "Descreva o ajuste tecnico..."
+                : "Digite seu comando local...";
+            logActivity(state.maintenance ? "Modo manutencao ligado." : "Modo manutencao desligado.");
+        }
+
+        function switchTab(mode) {
+            state.mode = mode;
+            const voice = mode === "voice";
+            els.tabChat.classList.toggle("active", !voice);
+            els.tabVoice.classList.toggle("active", voice);
+            els.voicePanel.classList.toggle("active", voice);
+            els.mainPanel.classList.toggle("voice-mode", voice);
+            if (voice) {
+                setVoiceTranscript(state.finalTranscript || "Aguardando voz.");
+            }
+        }
+
+        async function updateHealth() {
+            try {
+                const data = await api("/health");
+                setConnection(true, `${data.service} ativo em ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}.`);
+                els.operatorState.textContent = data.operator_mode ? "Ativo" : "Limitado";
+                els.toolsState.textContent = String(data.tools || "--");
+                if (data.voice) {
+                    state.voiceStatusData = data.voice;
+                    updateVoiceCloudPanel(data.voice);
+                }
+                els.voiceState.textContent = data.voice ? voiceProviderLabel(data.voice) : (data.tts_available ? "TTS OK" : "Sem TTS");
+                els.dangerState.textContent = data.dangerous_tools ? "Liberada" : "Travada";
+                els.modelPill.textContent = data.model || "--";
+                els.accessPill.textContent = data.full_access ? "Total" : (data.dangerous_tools ? "Avancado" : "Padrao");
+                if (data.brain) {
+                    const brainText = data.brain.running ? `Indexando ${data.brain.items || 0}` : `${data.brain.items || 0} itens`;
+                    els.brainState.textContent = brainText;
+                    els.drawerBrainState.textContent = brainText;
+                }
+            } catch (error) {
+                setConnection(false);
+                els.operatorState.textContent = "--";
+                els.toolsState.textContent = "--";
+                els.brainState.textContent = "--";
+                els.voiceState.textContent = "--";
+                els.dangerState.textContent = "--";
+                els.modelPill.textContent = "--";
+                els.accessPill.textContent = "--";
+            }
+        }
+
+        async function updateDiagnostics() {
+            try {
+                const data = await api("/diagnostics");
+                const ready = data.status === "ready";
+                const writable = Boolean(data.checks && data.checks.data_dir_writable);
+                els.appState.textContent = ready ? "Pronto" : "Revisar";
+                els.dataState.textContent = writable ? "OK" : "Bloq.";
+                els.diagPill.textContent = ready ? "Pronto" : "Revisar";
+                if (data.status !== state.lastDiagnostic) {
+                    state.lastDiagnostic = data.status;
+                    logActivity(`Diagnostico do app: ${ready ? "pronto" : "revisar dependencias"}.`);
+                }
+            } catch (error) {
+                els.appState.textContent = "--";
+                els.dataState.textContent = "--";
+                els.diagPill.textContent = "--";
+            }
+        }
+
+        async function updateBrainStatus() {
+            try {
+                const data = await api("/brain/status");
+                const brainText = data.running ? `Indexando ${data.items || 0}` : `${data.items || 0} itens`;
+                els.brainState.textContent = brainText;
+                els.drawerBrainState.textContent = brainText;
+                if (data.message && data.message !== state.lastBrainMessage) {
+                    state.lastBrainMessage = data.message;
+                    logActivity(`Cerebro: ${data.message.slice(0, 72)}`);
+                }
+            } catch (error) {
+                els.drawerBrainState.textContent = "--";
+            }
+        }
+
+        async function scanBrain() {
+            try {
+                const data = await api("/brain/scan", { method: "POST", body: "{}" });
+                logActivity(data.message || "Varredura do cerebro iniciada.");
+                updateBrainStatus();
+            } catch (error) {
+                showToast("Cerebro", "Falha ao iniciar varredura.");
+            }
+        }
+
+        async function searchBrain() {
+            const query = els.brainQuery.value.trim();
+            if (!query) return;
+            try {
+                const data = await api(`/brain/search?query=${encodeURIComponent(query)}&limit=8`);
+                const rows = (data.results || []).map((item) => {
+                    const row = document.createElement("button");
+                    row.type = "button";
+                    row.className = "btn mini-item";
+                    row.textContent = `${item.kind} | ${item.name} | ${item.path}`;
+                    row.addEventListener("click", () => {
+                        els.brainQuery.value = item.name;
+                        openBrainItem(item.name);
+                    });
+                    return row;
+                });
+                renderMiniList(els.brainResults, rows, "Nada encontrado no cerebro.");
+            } catch (error) {
+                showToast("Busca", "Nao consegui consultar o cerebro.");
+            }
+        }
+
+        async function openBrainItem(query = els.brainQuery.value.trim()) {
+            if (!query) return;
+            try {
+                const data = await api("/brain/open", {
+                    method: "POST",
+                    body: JSON.stringify({ query, background: true }),
+                });
+                logActivity(data.result || "Abertura solicitada.");
+                showToast("Abrir", (data.result || "").slice(0, 120));
+            } catch (error) {
+                showToast("Abrir", "Falha ao abrir item.");
+            }
+        }
+
+        async function updateToolCatalog() {
+            try {
+                const data = await api("/tools/catalog");
+                els.drawerToolCount.textContent = `${data.count || 0}`;
+                const rows = (data.tools || []).map((tool) => {
+                    const row = document.createElement("button");
+                    row.type = "button";
+                    row.className = "btn mini-item";
+                    row.textContent = `${tool.name}: ${tool.description || ""}`;
+                    row.addEventListener("click", () => {
+                        els.input.value = `Use a ferramenta ${tool.name} para `;
+                        switchTab("chat");
+                        toggleDrawer(false);
+                        els.input.focus();
+                    });
+                    return row;
+                });
+                renderMiniList(els.drawerToolsList, rows, "Catalogo vazio.");
+            } catch (error) {
+                els.drawerToolCount.textContent = "--";
+            }
+        }
+
+        async function analyzeUploadedFile() {
+            const file = els.fileUpload.files && els.fileUpload.files[0];
+            if (!file) {
+                showToast("Arquivo", "Escolha um arquivo primeiro.");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("file", file);
+            setBusy(true);
+            try {
+                const response = await fetch(`${API_BASE}/files/analyze`, { method: "POST", body: formData });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                addMessage("Arquivo analisado", data.result || "Analise concluida.", "system");
+                logActivity(`Arquivo memorizado: ${file.name}`);
+                showToast("Arquivo", "Analise salva no cerebro.");
+            } catch (error) {
+                showToast("Arquivo", "Falha ao analisar upload.");
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        async function updateFlows() {
+            try {
+                const data = await api("/flows");
+                const rows = (data.flows || []).map((flow) => {
+                    const row = document.createElement("button");
+                    row.type = "button";
+                    row.className = "btn mini-item";
+                    row.textContent = `${flow.name} | ${flow.steps.length} passos`;
+                    row.addEventListener("click", () => {
+                        els.flowName.value = flow.name;
+                        els.flowSteps.value = flow.steps.join("\n");
+                    });
+                    return row;
+                });
+                renderMiniList(els.flowList, rows, "Nenhum fluxo salvo.");
+            } catch (error) {
+                renderMiniList(els.flowList, [], "Fluxos indisponiveis.");
+            }
+        }
+
+        async function saveFlow() {
+            const name = els.flowName.value.trim();
+            const steps = els.flowSteps.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+            if (!name || !steps.length) {
+                showToast("Fluxo", "Informe nome e passos.");
+                return;
+            }
+            try {
+                const data = await api("/flows", { method: "POST", body: JSON.stringify({ name, steps }) });
+                logActivity(data.result || "Fluxo salvo.");
+                updateFlows();
+            } catch (error) {
+                showToast("Fluxo", "Falha ao salvar.");
+            }
+        }
+
+        async function runFlow() {
+            const name = els.flowName.value.trim();
+            if (!name) return;
+            try {
+                const data = await api(`/flows/${encodeURIComponent(name)}/run`, { method: "POST", body: "{}" });
+                addMessage("Fluxo", data.result || "Fluxo executado.", "system");
+            } catch (error) {
+                showToast("Fluxo", "Falha ao executar.");
+            }
+        }
+
+        async function sendAppNotification() {
+            const message = els.notifyMessage.value.trim();
+            const channels = els.notifyChannels.value.split(",").map((item) => item.trim()).filter(Boolean);
+            if (!message) return;
+            try {
+                const data = await api("/notifications/send", {
+                    method: "POST",
+                    body: JSON.stringify({ title: "Assistente Elite", message, channels: channels.length ? channels : ["app"] }),
+                });
+                logActivity(`Notificacao: ${data.status || "ok"}`);
+                updateNotifications();
+            } catch (error) {
+                showToast("Notificacao", "Falha ao enviar.");
+            }
+        }
+
+        async function updateNotifications() {
+            try {
+                const data = await api("/notifications/events?limit=8");
+                const events = data.events || [];
+                const rows = events.map((event) => {
+                    const row = document.createElement("div");
+                    row.className = "mini-item";
+                    row.textContent = `${event.created_at} | ${event.title}: ${event.message} (${event.status})`;
+                    return row;
+                });
+                renderMiniList(els.notificationsList, rows, "Nenhuma notificacao.");
+                if (events[0]) {
+                    const key = `${events[0].created_at}-${events[0].message}`;
+                    if (state.lastNotificationKey && key !== state.lastNotificationKey) {
+                        showToast(events[0].title || "Notificacao", events[0].message || "");
+                    }
+                    state.lastNotificationKey = key;
+                }
+            } catch (error) {
+                renderMiniList(els.notificationsList, [], "Notificacoes indisponiveis.");
+            }
+        }
+
+        async function updateBrowserStatus() {
+            try {
+                const data = await api("/browser/status");
+                const label = data.browserbase_configured
+                    ? (data.stagehand_enabled ? "Stagehand" : "Browserbase")
+                    : "Local";
+                els.browserState.textContent = `${label} | ${data.pending_approvals || 0}`;
+                els.browserApprovalCount.textContent = String(data.pending_approvals || 0);
+            } catch (error) {
+                els.browserState.textContent = "--";
+            }
+        }
+
+        function renderBrowserOutput(payload) {
+            const row = document.createElement("div");
+            row.className = "mini-item";
+            const text = payload.text || payload.message || payload.reason || payload.error || payload.status || JSON.stringify(payload);
+            row.textContent = String(text).slice(0, 1200);
+            renderMiniList(els.browserOutput, [row], "Sem retorno.");
+        }
+
+        async function browserFetch() {
+            const url = els.browserUrl.value.trim();
+            if (!url) {
+                showToast("Navegador", "Informe uma URL.");
+                return;
+            }
+            try {
+                const data = await api("/browser/fetch", {
+                    method: "POST",
+                    body: JSON.stringify({ url, limit: 5000 }),
+                });
+                renderBrowserOutput(data);
+                addMessage("Navegador", `${data.title || url}\n${(data.text || data.error || "").slice(0, 1800)}`, data.ok === false ? "error" : "system");
+                logActivity(`Navegador leu: ${url}`);
+            } catch (error) {
+                showToast("Navegador", "Falha ao ler pagina.");
+            }
+        }
+
+        async function browserRun() {
+            const instruction = els.browserInstruction.value.trim();
+            const url = els.browserUrl.value.trim();
+            if (!instruction) {
+                showToast("Navegador", "Informe a instrucao.");
+                return;
+            }
+            try {
+                const data = await api("/browser/run", {
+                    method: "POST",
+                    body: JSON.stringify({ instruction, url, mode: "prepare" }),
+                });
+                renderBrowserOutput(data);
+                if (data.status === "needs_approval") {
+                    showToast("Aprovacao", "Acao aguardando confirmacao.");
+                    updateBrowserApprovals();
+                } else {
+                    addMessage("Navegador", JSON.stringify(data, null, 2), "system");
+                }
+                updateBrowserStatus();
+            } catch (error) {
+                showToast("Navegador", "Falha ao preparar acao.");
+            }
+        }
+
+        async function updateBrowserApprovals() {
+            try {
+                const data = await api("/browser/approvals?limit=10");
+                const approvals = data.approvals || [];
+                els.browserApprovalCount.textContent = String(approvals.length);
+                const rows = approvals.map((approval) => {
+                    const box = document.createElement("div");
+                    box.className = "mini-item";
+                    const text = document.createElement("div");
+                    text.textContent = `${approval.impact} | ${approval.reason} | ${approval.instruction}`;
+                    const actions = document.createElement("div");
+                    actions.className = "drawer-actions";
+                    const approve = document.createElement("button");
+                    approve.className = "btn chip";
+                    approve.type = "button";
+                    approve.textContent = "Aprovar";
+                    approve.addEventListener("click", () => decideBrowserApproval(approval.id, true));
+                    const reject = document.createElement("button");
+                    reject.className = "btn chip";
+                    reject.type = "button";
+                    reject.textContent = "Rejeitar";
+                    reject.addEventListener("click", () => decideBrowserApproval(approval.id, false));
+                    actions.append(approve, reject);
+                    box.append(text, actions);
+                    return box;
+                });
+                renderMiniList(els.browserApprovals, rows, "Nenhuma acao pendente.");
+            } catch (error) {
+                renderMiniList(els.browserApprovals, [], "Aprovacoes indisponiveis.");
+            }
+        }
+
+        async function decideBrowserApproval(id, approved) {
+            try {
+                const data = await api(`/browser/approvals/${encodeURIComponent(id)}`, {
+                    method: "POST",
+                    body: JSON.stringify({ approved, note: approved ? "Aprovado no dashboard" : "Rejeitado no dashboard" }),
+                });
+                addMessage("Aprovacao do navegador", JSON.stringify(data, null, 2), "system");
+                updateBrowserApprovals();
+                updateBrowserStatus();
+            } catch (error) {
+                showToast("Aprovacao", "Falha ao decidir acao.");
+            }
+        }
+
+        async function sendTranscriptToChat() {
+            const transcript = state.voiceLog.map((item) => `${item.time} ${item.speaker}: ${item.text}`).join("\n");
+            const text = transcript || "Ainda nao ha transcricao de voz nesta sessao.";
+            switchTab("chat");
+            addMessage("Transcricao de voz", text, "system");
+            try {
+                await api("/brain/remember", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        title: `Transcricao de voz ${new Date().toLocaleString("pt-BR")}`,
+                        content: text,
+                        tags: "voz,transcricao",
+                    }),
+                });
+                logActivity("Transcricao enviada ao chat e salva no cerebro.");
+            } catch (error) {
+                logActivity("Transcricao enviada ao chat.");
+            }
+        }
+
+        function setMetric(name, value) {
+            const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+            els[`${name}Val`].textContent = `${safeValue.toFixed(0)}%`;
+            els[`${name}Bar`].style.width = `${safeValue}%`;
+        }
+
+        async function updateStats() {
+            try {
+                const stats = await api("/stats");
+                setMetric("cpu", Number(stats.cpu_usage));
+                setMetric("ram", Number(stats.ram_usage));
+                setMetric("disk", Number(stats.disk_usage));
+                els.lastUpdate.textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            } catch (error) {
+                setConnection(false);
+            }
+        }
+
+        async function updateVoiceDevices() {
+            try {
+                const data = await api("/voice/devices");
+                const devices = data.devices || [];
+                const first = devices[0];
+                const label = typeof first === "string" ? first : (first ? `[${first.index}] ${first.name}` : "");
+                els.voiceDevices.textContent = devices.length
+                    ? `Microfone: ${label}${devices.length > 1 ? ` (+${devices.length - 1})` : ""}`
+                    : "Microfone: nenhum dispositivo";
+            } catch (error) {
+                els.voiceDevices.textContent = "Microfone: indisponivel";
+            }
+        }
+
+        async function updateVoiceStatus() {
+            try {
+                const data = await api("/voice/status");
+                state.voiceStatusData = data;
+                state.cloudVoice = Boolean(data.deepgram_configured && navigator.mediaDevices && window.MediaRecorder);
+                const label = voiceProviderLabel(data);
+                els.voiceSupport.textContent = label;
+                els.voiceStageSupport.textContent = label;
+                els.voiceState.textContent = label;
+                updateVoiceCloudPanel(data);
+                if (state.cloudVoice && !state.listening && !state.busy && !state.finalTranscript) {
+                    setVoiceTranscript("Deepgram pronto para escutar.");
+                }
+            } catch (error) {
+                state.cloudVoice = false;
+                updateVoiceCloudPanel({});
+            }
+        }
+
+        async function captureSnapshot(silent = false) {
+            try {
+                const data = await api("/screen/snapshot");
+                els.screenPreview.src = data.image;
+                els.screenState.textContent = new Date(data.timestamp * 1000).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                if (!silent) logActivity(`Tela capturada: ${data.width}x${data.height}`);
+            } catch (error) {
+                els.screenState.textContent = "Erro";
+                if (!silent) logActivity(`Tela: ${error.message.slice(0, 80)}`);
+            }
+        }
+
+        function toggleWatch() {
+            if (state.watchTimer) {
+                clearInterval(state.watchTimer);
+                state.watchTimer = null;
+                els.watchBtn.classList.remove("active");
+                els.watchBtn.textContent = "Acompanhar";
+                els.screenState.textContent = "Manual";
+                logActivity("Acompanhamento pausado.");
+                return;
+            }
+            captureSnapshot();
+            state.watchTimer = setInterval(() => captureSnapshot(true), 5000);
+            els.watchBtn.classList.add("active");
+            els.watchBtn.textContent = "Pausar";
+            els.screenState.textContent = "Ao vivo";
+            logActivity("Acompanhamento ativo.");
+        }
+
+        function setupVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                state.backendVoice = true;
+                els.voiceSupport.textContent = "Backend";
+                els.voiceStageSupport.textContent = "Backend";
+                setVoiceTranscript("Aguardando voz pelo backend.");
+                return;
+            }
+
+            els.voiceSupport.textContent = "Browser";
+            els.voiceStageSupport.textContent = "Browser";
+            state.recognition = new SpeechRecognition();
+            state.recognition.lang = "pt-BR";
+            state.recognition.continuous = false;
+            state.recognition.interimResults = true;
+
+            state.recognition.onstart = () => {
+                state.listening = true;
+                state.finalTranscript = "";
+                setHologram("listening", "Ouvindo");
+                els.voiceStatus.textContent = "Ouvindo";
+                els.voiceStatusStage.textContent = "Ouvindo";
+                setVoiceButtons("Parar");
+                setVoiceTranscript("Ouvindo...");
+            };
+
+            state.recognition.onresult = (event) => {
+                let interim = "";
+                for (let i = event.resultIndex; i < event.results.length; i += 1) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        state.finalTranscript += transcript;
+                    } else {
+                        interim += transcript;
+                    }
+                }
+                setVoiceTranscript(state.finalTranscript || interim || "Ouvindo...");
+            };
+
+            state.recognition.onerror = (event) => {
+                logActivity(`Voz: ${event.error}`);
+                els.voiceStatus.textContent = "Erro de voz";
+                els.voiceStatusStage.textContent = "Erro de voz";
+            };
+
+            state.recognition.onend = () => {
+                const finalText = state.finalTranscript.trim();
+                state.listening = false;
+                els.voiceStatus.textContent = finalText ? "Enviando voz" : "Voz em espera";
+                els.voiceStatusStage.textContent = finalText ? "Enviando voz" : "Voz em espera";
+                setVoiceButtons("Ouvir");
+                if (finalText) {
+                    sendMessage(finalText, "voice");
+                } else {
+                    setHologram(null, "Em espera");
+                }
+            };
+        }
+
+        async function listenViaBackend() {
+            if (state.busy || state.listening) return;
+            state.listening = true;
+            setHologram("listening", "Ouvindo");
+            els.voiceStatus.textContent = "Ouvindo pelo backend";
+            els.voiceStatusStage.textContent = "Ouvindo pelo backend";
+            setVoiceButtons("Ouvindo", true);
+            setVoiceTranscript("Ouvindo...");
+            try {
+                const data = await api("/voice/listen", { method: "POST", body: "{}" });
+                const text = (data.text || "").trim();
+                state.finalTranscript = text;
+                setVoiceTranscript(text || "Nao ouvi nada claro.");
+                if (data.ok && text) {
+                    await sendMessage(text, "voice");
+                } else if (text) {
+                    addMessage("Voz", text, "error");
+                    appendVoiceLog("Sistema", text);
+                }
+            } catch (error) {
+                setVoiceTranscript("Falha ao acessar o microfone local.");
+                logActivity(`Voz backend: ${error.message.slice(0, 90)}`);
+            } finally {
+                state.listening = false;
+                els.voiceStatus.textContent = "Voz em espera";
+                els.voiceStatusStage.textContent = "Voz em espera";
+                setVoiceButtons("Ouvir", false);
+                if (!state.busy) {
+                    setHologram(null, "Em espera");
+                }
+            }
+        }
+
+        async function transcribeCloudAudio(blob) {
+            els.voiceStatus.textContent = "Transcrevendo";
+            els.voiceStatusStage.textContent = "Transcrevendo";
+            setVoiceButtons("Processando", true);
+            setVoiceTranscript("Enviando audio para Deepgram...");
+            try {
+                const formData = new FormData();
+                formData.append("audio", blob, "voz.webm");
+                const response = await fetch(`${API_BASE}/voice/transcribe`, {
+                    method: "POST",
+                    body: formData,
+                });
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+                const data = await response.json();
+                const text = (data.text || "").trim();
+                state.finalTranscript = text;
+                setVoiceTranscript(text || "Nao ouvi nada claro.");
+                if (data.ok && text) {
+                    await sendMessage(text, "voice");
+                } else if (data.error) {
+                    addMessage("Voz", data.error, "error");
+                    appendVoiceLog("Sistema", data.error);
+                }
+            } catch (error) {
+                setVoiceTranscript("Falha ao transcrever com Deepgram.");
+                logActivity(`Deepgram: ${error.message.slice(0, 90)}`);
+            } finally {
+                state.listening = false;
+                setVoiceButtons("Ouvir", false);
+                els.voiceStatus.textContent = "Voz em espera";
+                els.voiceStatusStage.textContent = "Voz em espera";
+                if (!state.busy) {
+                    setHologram(null, "Em espera");
+                }
+            }
+        }
+
+        async function toggleCloudRecording() {
+            if (state.busy) return;
+            if (state.listening && state.mediaRecorder) {
+                state.mediaRecorder.stop();
+                setVoiceButtons("Processando", true);
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const options = window.MediaRecorder && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+                    ? { mimeType: "audio/webm;codecs=opus" }
+                    : {};
+                state.audioChunks = [];
+                state.mediaRecorder = new MediaRecorder(stream, options);
+                state.mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size) {
+                        state.audioChunks.push(event.data);
+                    }
+                };
+                state.mediaRecorder.onstop = () => {
+                    stream.getTracks().forEach((track) => track.stop());
+                    const blob = new Blob(state.audioChunks, { type: state.mediaRecorder.mimeType || "audio/webm" });
+                    state.mediaRecorder = null;
+                    if (!blob.size) {
+                        state.listening = false;
+                        setVoiceButtons("Ouvir", false);
+                        setVoiceTranscript("Audio vazio.");
+                        setHologram(null, "Em espera");
+                        return;
+                    }
+                    transcribeCloudAudio(blob);
+                };
+                state.listening = true;
+                state.finalTranscript = "";
+                setHologram("listening", "Ouvindo");
+                els.voiceStatus.textContent = "Ouvindo com Deepgram";
+                els.voiceStatusStage.textContent = "Ouvindo com Deepgram";
+                setVoiceButtons("Parar");
+                setVoiceTranscript("Ouvindo...");
+                state.mediaRecorder.start();
+            } catch (error) {
+                state.listening = false;
+                setVoiceButtons("Ouvir", false);
+                setVoiceTranscript("Permissao de microfone negada ou indisponivel.");
+                logActivity(`Microfone: ${error.message.slice(0, 90)}`);
+                setHologram(null, "Em espera");
+            }
+        }
+
+        function toggleVoice() {
+            if (state.cloudVoice) {
+                toggleCloudRecording();
+                return;
+            }
+            if (state.backendVoice || !state.recognition) {
+                listenViaBackend();
+                return;
+            }
+            if (state.listening) {
+                state.recognition.stop();
+            } else {
+                try {
+                    state.recognition.start();
+                } catch (error) {
+                    logActivity(`Voz: ${error.message}`);
+                }
+            }
+        }
+
+        function setupCanvas() {
+            const canvas = document.getElementById("field");
+            const ctx = canvas.getContext("2d");
+            const points = [];
+
+            function resize() {
+                canvas.width = window.innerWidth * window.devicePixelRatio;
+                canvas.height = window.innerHeight * window.devicePixelRatio;
+                canvas.style.width = `${window.innerWidth}px`;
+                canvas.style.height = `${window.innerHeight}px`;
+                ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+                points.length = 0;
+                const count = Math.max(54, Math.floor((window.innerWidth * window.innerHeight) / 18000));
+                for (let i = 0; i < count; i += 1) {
+                    points.push({
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
+                        vx: (Math.random() - 0.5) * 0.22,
+                        vy: (Math.random() - 0.5) * 0.22,
+                    });
+                }
+            }
+
+            function drawGrid() {
+                ctx.strokeStyle = "rgba(255,255,255,0.045)";
+                ctx.lineWidth = 1;
+                const gap = 44;
+                for (let x = 0; x < window.innerWidth; x += gap) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, window.innerHeight);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < window.innerHeight; y += gap) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(window.innerWidth, y);
+                    ctx.stroke();
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                drawGrid();
+
+                for (const point of points) {
+                    point.x += point.vx;
+                    point.y += point.vy;
+                    if (point.x < 0 || point.x > window.innerWidth) point.vx *= -1;
+                    if (point.y < 0 || point.y > window.innerHeight) point.vy *= -1;
+                }
+
+                for (let i = 0; i < points.length; i += 1) {
+                    for (let j = i + 1; j < points.length; j += 1) {
+                        const a = points[i];
+                        const b = points[j];
+                        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+                        if (distance < 126) {
+                            ctx.strokeStyle = `rgba(255,255,255,${0.105 * (1 - distance / 126)})`;
+                            ctx.beginPath();
+                            ctx.moveTo(a.x, a.y);
+                            ctx.lineTo(b.x, b.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                for (const point of points) {
+                    ctx.fillStyle = "rgba(255,255,255,0.34)";
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 1.25, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener("resize", resize);
+            resize();
+            animate();
+        }
+
+        document.getElementById("composer").addEventListener("submit", (event) => {
+            event.preventDefault();
+            sendMessage();
+        });
+
+        els.input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        document.querySelectorAll("[data-command]").forEach((button) => {
+            button.addEventListener("click", () => {
+                els.input.value = button.dataset.command;
+                els.input.focus();
+            });
+        });
+
+        els.clearBtn.addEventListener("click", clearChat);
+        els.modBtn.addEventListener("click", toggleModMode);
+        els.menuBtn.addEventListener("click", () => toggleDrawer(true));
+        els.drawerClose.addEventListener("click", () => toggleDrawer(false));
+        els.drawerBackdrop.addEventListener("click", () => toggleDrawer(false));
+        els.snapshotBtn.addEventListener("click", () => captureSnapshot());
+        els.tabChat.addEventListener("click", () => switchTab("chat"));
+        els.tabVoice.addEventListener("click", () => switchTab("voice"));
+        els.voiceToggle.addEventListener("click", toggleVoice);
+        els.voiceStageToggle.addEventListener("click", toggleVoice);
+        els.sendTranscriptBtn.addEventListener("click", sendTranscriptToChat);
+        els.watchBtn.addEventListener("click", toggleWatch);
+        els.scanBrainBtn.addEventListener("click", scanBrain);
+        els.brainQuery.addEventListener("input", () => {
+            clearTimeout(state.brainSearchTimer);
+            state.brainSearchTimer = setTimeout(searchBrain, 260);
+        });
+        els.brainQuery.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                searchBrain();
+            }
+        });
+        els.openBrainBtn.addEventListener("click", () => openBrainItem());
+        els.analyzeFileBtn.addEventListener("click", analyzeUploadedFile);
+        els.saveFlowBtn.addEventListener("click", saveFlow);
+        els.runFlowBtn.addEventListener("click", runFlow);
+        els.sendNotifyBtn.addEventListener("click", sendAppNotification);
+        els.browserFetchBtn.addEventListener("click", browserFetch);
+        els.browserRunBtn.addEventListener("click", browserRun);
+        if (els.voiceCloudRefresh) {
+            els.voiceCloudRefresh.addEventListener("click", updateVoiceStatus);
+        }
+
+        setupCanvas();
+        setupVoice();
+        setTimeout(() => document.body.classList.add("booted"), 1100);
+        updateVoiceStatus();
+        updateVoiceDevices();
+        updateHealth();
+        updateDiagnostics();
+        updateBrainStatus();
+        updateToolCatalog();
+        updateFlows();
+        updateNotifications();
+        updateBrowserStatus();
+        updateBrowserApprovals();
+        updateStats();
+        setInterval(updateHealth, 6000);
+        setInterval(updateDiagnostics, 12000);
+        setInterval(updateBrainStatus, 7000);
+        setInterval(updateNotifications, 8000);
+        setInterval(updateVoiceStatus, 15000);
+        setInterval(updateBrowserStatus, 9000);
+        setInterval(updateBrowserApprovals, 10000);
+        setInterval(updateStats, 2500);
+    </script>
+</body>
+</html>
